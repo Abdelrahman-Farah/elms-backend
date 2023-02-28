@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "elms"
+version = "0.1.0"
+description = "An Enhanced E-Learning Management System (E-LMS)"
+authors = ["Abdelrahman Farah Mohammed <abdelrahman.mohammed@bld.ai>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+Django = "^4.1.7"
+djangorestframework = "^3.14.0"
+djoser = "^2.1.0"
+social-auth-core = "^4.3.0"
+django-cors-headers = "^3.13.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
