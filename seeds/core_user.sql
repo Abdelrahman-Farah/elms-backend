@@ -1,0 +1,4 @@
+insert into elms.core_user (id, password, last_login, is_superuser, username, first_name, last_name, is_staff, is_active, date_joined, email)
+values  (1, 'pbkdf2_sha256$390000$YVgGApgQKcYO7vIeKYVHl4$Cmg8dyhvK4CVkMDXfBw+89Jm+Yz32hl24TgfP90UhIU=', '2023-03-07 14:06:09.038319', 1, 'AbdoFarah', '', '', 1, 1, '2023-03-07 14:06:03.714044', '3bdo@gmail.com'),
+        (2, 'pbkdf2_sha256$390000$sNSgDVs9TKUl8pMGQrkG4Q$J5m4UQSTf4NhBCPySoUgnEAtEy5yvPFF3pCl8M198QM=', null, 1, 'Mazen31', '', '', 1, 1, '2023-03-07 14:37:26.489649', 'mazen@gmail.com'),
+        (3, 'pbkdf2_sha256$390000$fFcE2mLtnyoUlVtxhkJqdL$l2+pxsG4MNs+I08KUduEl1DcRCk0PxqI+a/9r/lbcu0=', null, 1, 'AdhamAhmed', '', '', 1, 1, '2023-03-07 15:08:18.039547', 'Adham@gmail.com');
