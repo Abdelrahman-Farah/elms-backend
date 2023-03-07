@@ -162,11 +162,14 @@ cython_debug/
 
 
 
-
-
-
-
-
-
-# Django migration automatic tables
+## Django migration automatic tables
 seeds/auth_group.sql
+seeds/auth_group_permissions.sql
+seeds/auth_permission.sql
+#seeds/core_user.sql
+seeds/core_user_groups.sql
+seeds/core_user_user_permissions.sql
+seeds/django_admin_log.sql
+seeds/django_content_type.sql
+seeds/django_migrations.sql
+seeds/django_session.sql
