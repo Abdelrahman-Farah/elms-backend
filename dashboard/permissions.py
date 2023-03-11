@@ -20,7 +20,7 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
     
 
 
-class PostOwnerOnly(permissions.BasePermission):
+class OwnerOnly(permissions.BasePermission):
     """ 
     Custom permission class to only allow owners of a course to create posts related to that course.
     """

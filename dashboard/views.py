@@ -1,14 +1,14 @@
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.mixins import CreateModelMixin
+from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, ListModelMixin,DestroyModelMixin
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.viewsets import ModelViewSet
 
-from .permissions import IsOwnerOrReadOnly, PostOwnerOnly
+from .permissions import IsOwnerOrReadOnly, OwnerOnly
 from .serializers import CourseEnrollSerializer, CourseLearnerSerializer, CourseSerializer, PostSerializer
 from .models import Course, CourseLearner, Post, Learner
 
@@ -78,7 +78,7 @@ class CourseViewSet(ModelViewSet):
 # Viewset for managing posts
 class PostViewSet(ModelViewSet):
     serializer_class = PostSerializer
-    permission_classes = [IsAuthenticated, PostOwnerOnly]
+    permission_classes = [IsAuthenticated, OwnerOnly]
 
     # Get the posts queryset based on the course id provided in the URL
     def get_queryset(self):
@@ -128,9 +128,9 @@ class CourseEnrollViewSet(CreateModelMixin, GenericViewSet):
         return Response({"detail": f"Successfully enrolled in course"})
 
 # Viewset for Course Learner
-class CourseLearnerViewSet(ModelViewSet):
+class CourseLearnerViewSet(RetrieveModelMixin, ListModelMixin, DestroyModelMixin, GenericViewSet):
     serializer_class = CourseLearnerSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, OwnerOnly]
 
     # Get the Learners queryset based on the course id provided in the URL
     def get_queryset(self):

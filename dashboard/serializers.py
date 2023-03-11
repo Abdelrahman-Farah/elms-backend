@@ -63,7 +63,7 @@ class CourseLearnerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CourseLearner
-        fields = ["learner"]
+        fields = ["id", "learner"]
 
 
     # Define custom method to get learner details
