@@ -12,6 +12,9 @@ djangorestframework = "^3.14.0"
 djoser = "^2.1.0"
 social-auth-core = "^4.3.0"
 django-cors-headers = "^3.13.0"
+mysqlclient = "^2.1.1"
+Pillow = "^9.4.0"
+drf-nested-routers = "^0.93.4"
 
 
 [tool.poetry.group.dev.dependencies]
