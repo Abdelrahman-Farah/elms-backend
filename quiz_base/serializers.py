@@ -1,5 +1,4 @@
 from django.db import transaction
-# from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 from .models import QuizModel, DifficultySet, Question, Answer
 
@@ -74,6 +73,7 @@ class DifficultySetSerializer(serializers.ModelSerializer):
 
 class QuizModelSerializer(serializers.ModelSerializer):
     difficulty_sets = DifficultySetSerializer(many = True)
+    total_grades_after_randomizing = serializers.DecimalField(max_digits=6, decimal_places=2, read_only=True)
 
     def validate_difficulty_sets(self, difficulty_sets):
 
@@ -88,22 +88,29 @@ class QuizModelSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = QuizModel
-        fields = ['id', 'title', 'description', 'start_date', 'duration_in_minutes', 'difficulty_sets']
+        fields = ['id', 'title', 'description', 'start_date', 'duration_in_minutes', 'total_grades_after_randomizing', 'difficulty_sets']
 
 
     def create(self, validated_data):
         with transaction.atomic():
 
             difficulty_sets_data = validated_data.pop('difficulty_sets')
-            quiz_model = QuizModel.objects.create(**validated_data)
+            quiz_model = QuizModel.objects.create(total_grades_after_randomizing=0, **validated_data)
 
+            grades_counter = 0
             for difficulty_set_data in difficulty_sets_data:
                 questions_data = difficulty_set_data.pop('questions')
                 difficulty_set = DifficultySet.objects.create(quiz_model=quiz_model, **difficulty_set_data)
 
+                if difficulty_set_data['is_mandatory'] == False:
+                    grades_counter += difficulty_set_data['number_of_used_questions_from_this_set']*questions_data[0]['points']
+
                 for question_data in questions_data:
                     answers_data = question_data.pop('answers')
                     question = Question.objects.create(set=difficulty_set, **question_data)
+
+                    if difficulty_set_data['is_mandatory'] == True:
+                        grades_counter += question_data['points']
 
                     answers = [
                         Answer(
@@ -113,4 +120,5 @@ class QuizModelSerializer(serializers.ModelSerializer):
                     ]
                     Answer.objects.bulk_create(answers)
 
+            quiz_model.total_grades_after_randomizing = grades_counter
             return quiz_model

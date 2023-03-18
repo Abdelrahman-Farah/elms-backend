@@ -6,6 +6,7 @@ class QuizModel(models.Model):
     description = models.TextField(blank=True)
     start_date = models.DateTimeField()
     duration_in_minutes = models.IntegerField()
+    total_grades_after_randomizing = models.DecimalField(max_digits=6, decimal_places=2)
 
 
 class DifficultySet(models.Model):
@@ -17,7 +18,7 @@ class DifficultySet(models.Model):
 class Question(models.Model):
     body = models.CharField(max_length=512)
     set = models.ForeignKey(DifficultySet, on_delete=models.CASCADE, related_name='questions')
-    points = models.DecimalField(max_digits=5, decimal_places=2)
+    points = models.DecimalField(max_digits=6, decimal_places=2)
 
 
 
