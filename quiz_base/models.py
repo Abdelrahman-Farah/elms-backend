@@ -17,7 +17,7 @@ class DifficultySet(models.Model):
 class Question(models.Model):
     body = models.CharField(max_length=512)
     set = models.ForeignKey(DifficultySet, on_delete=models.CASCADE, related_name='questions')
-    score = models.DecimalField(max_digits=5, decimal_places=2)
+    points = models.DecimalField(max_digits=5, decimal_places=2)
 
 
 

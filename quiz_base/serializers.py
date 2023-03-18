@@ -31,7 +31,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        fields = ['id', 'body', 'score', 'answers']
+        fields = ['id', 'body', 'points', 'answers']
 
 
 class DifficultySetSerializer(serializers.ModelSerializer):
@@ -47,6 +47,7 @@ class DifficultySetSerializer(serializers.ModelSerializer):
         if data['is_mandatory'] == True and data['number_of_used_questions_from_this_set'] != len(data['questions']):
             raise serializers.ValidationError('This set is mandatory, So the number_of_used_questions_from_this_set must be equal to the number of all questions.')
 
+        # TODO: when is_mandatory=false and points are not equal
         return data
 
     class Meta:
