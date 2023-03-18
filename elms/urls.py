@@ -22,7 +22,8 @@ urlpatterns = [
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
 
-    path('quiz_base/', include('quiz_base.urls'))
+    path('quiz_base/', include('quiz_base.urls')),
+    path('quiz/', include('quiz.urls')),
 
     # path('api-auth/', include('rest_framework.urls')),
 ]
