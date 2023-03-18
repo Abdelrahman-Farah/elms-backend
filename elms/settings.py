@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'djoser',
     'core',
     'corsheaders',
+    'quiz_base',
 ]
 
 MIDDLEWARE = [
