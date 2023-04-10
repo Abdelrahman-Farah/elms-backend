@@ -120,5 +120,6 @@ class QuizModelSerializer(serializers.ModelSerializer):
                     ]
                     Answer.objects.bulk_create(answers)
 
+            QuizModel.objects.filter(pk=quiz_model.id).update(total_grades_after_randomizing=grades_counter)
             quiz_model.total_grades_after_randomizing = grades_counter
             return quiz_model
