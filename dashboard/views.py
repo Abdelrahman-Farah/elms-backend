@@ -33,7 +33,8 @@ class CourseViewSet(ModelViewSet):
         if user.is_authenticated:
             queryset = Course.objects.filter(
                 Q(owner=user) | Q(course_learners__learner__user=user)
-            )
+            ).distinct()
+            print(queryset)
             return queryset
         return Course.objects.none()
 
@@ -42,6 +43,7 @@ class CourseViewSet(ModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
 
         owner_courses = queryset.filter(owner=request.user)
+        
         learner_courses = queryset.exclude(owner=request.user)
 
         first_serializer = CourseSerializer(owner_courses, many=True)
