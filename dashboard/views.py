@@ -34,7 +34,6 @@ class CourseViewSet(ModelViewSet):
             queryset = Course.objects.filter(
                 Q(owner=user) | Q(course_learners__learner__user=user)
             ).distinct()
-            print(queryset)
             return queryset
         return Course.objects.none()
 
