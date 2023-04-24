@@ -1,7 +1,12 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+
 class User(AbstractUser):
     first_name = models.CharField(max_length=64)
     last_name = models.CharField(max_length=64)
     email = models.EmailField(unique=True)
+    has_gmail = models.BooleanField(default=False)
+    Gaccess_token = models.CharField(max_length=255, null=True, blank=True)
+    Grefresh_token = models.CharField(max_length=255, null=True, blank=True)
+    
