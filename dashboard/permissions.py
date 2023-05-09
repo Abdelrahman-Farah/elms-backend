@@ -31,3 +31,13 @@ class OwnerOnly(permissions.BasePermission):
         course_id = view.kwargs.get('course_pk')
         course = get_object_or_404(Course, id=course_id)
         return course.owner == request.user
+    
+
+class EnrolledStudentsOnly(permissions.BasePermission):
+    """
+    Custom permission to allow only enrolled students to view the posts of a course.
+    """
+    def has_permission(self, request, view):
+        course_id = view.kwargs.get('course_pk')
+        course = get_object_or_404(Course.objects.prefetch_related('course_learners'), id=course_id)
+        return request.user in [cl.learner.user for cl in course.course_learners.all()]

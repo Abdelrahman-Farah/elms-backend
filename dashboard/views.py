@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.viewsets import ModelViewSet
 
-from .permissions import IsOwnerOrReadOnly, OwnerOnly
+from .permissions import IsOwnerOrReadOnly, OwnerOnly, EnrolledStudentsOnly
 from .serializers import CourseEnrollSerializer, CourseLearnerSerializer, CourseSerializer, PostSerializer
 from .models import Course, CourseLearner, Post, Learner
 
@@ -33,7 +33,7 @@ class CourseViewSet(ModelViewSet):
         if user.is_authenticated:
             queryset = Course.objects.filter(
                 Q(owner=user) | Q(course_learners__learner__user=user)
-            ).distinct()
+            ).distinct().select_related("owner")
             return queryset
         return Course.objects.none()
 
@@ -79,7 +79,7 @@ class CourseViewSet(ModelViewSet):
 # Viewset for managing posts
 class PostViewSet(ModelViewSet):
     serializer_class = PostSerializer
-    permission_classes = [IsAuthenticated, OwnerOnly]
+    permission_classes = [IsAuthenticated, OwnerOnly, EnrolledStudentsOnly]
 
     # Get the posts queryset based on the course id provided in the URL
     def get_queryset(self):
@@ -114,7 +114,7 @@ class CourseEnrollViewSet(CreateModelMixin, GenericViewSet):
             course = Course.objects.get(join_code=join_code)
         except Course.DoesNotExist:
             return Response(
-                {"error": "Invalid enroll code"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": "Invalid enroll code"}, status=status.HTTP_406_NOT_ACCEPTABLE
             )
 
         learner, created = Learner.objects.get_or_create(user=request.user)
@@ -122,11 +122,11 @@ class CourseEnrollViewSet(CreateModelMixin, GenericViewSet):
             learner.save()
 
         if CourseLearner.objects.filter(learner=learner, course=course).exists():
-            return Response({"detail": "User is already subscribed to this course."})
+            return Response({"detail": "User is already subscribed to this course."}, status=status.HTTP_409_CONFLICT)
 
         subscribers = CourseLearner(learner=learner, course=course)
         subscribers.save()
-        return Response({"detail": f"Successfully enrolled in course"})
+        return Response({"detail": f"Successfully enrolled in course"}, status=status.HTTP_201_CREATED)
 
 # Viewset for Course Learner
 class CourseLearnerViewSet(RetrieveModelMixin, ListModelMixin, DestroyModelMixin, GenericViewSet):
