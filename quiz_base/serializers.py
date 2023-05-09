@@ -13,12 +13,12 @@ class AnswerSerializer(serializers.ModelSerializer):
 class QuestionSerializer(serializers.ModelSerializer):
     answers = AnswerSerializer(many = True)
 
-    def validate_answers(self, answers):
-        if len(answers) < 2:
+    def validate(self, data):
+        if len(data['answers']) < 2:
             raise serializers.ValidationError('The question must have atleast 2 choices.')
 
         correct_answers = 0
-        for answer in answers:
+        for answer in data['answers']:
             correct_answers += answer['is_correct']
 
         if correct_answers == 0:
@@ -27,7 +27,7 @@ class QuestionSerializer(serializers.ModelSerializer):
         if correct_answers > 1:
             raise serializers.ValidationError('This question has more than one correct choice.')
 
-        return answers
+        return data
 
     class Meta:
         model = Question
@@ -39,7 +39,7 @@ class DifficultySetSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         if len(data['questions']) == 0:
-            raise serializers.ValidationError({'questions': 'This set has no questions.'})
+            raise serializers.ValidationError('This set has no questions, Add some questions and Submit again!')
 
         if data['number_of_used_questions_from_this_set'] > len(data['questions']):
             raise serializers.ValidationError('The number of used questions from this set is greater than the actual number of questions.')
@@ -74,6 +74,11 @@ class DifficultySetSerializer(serializers.ModelSerializer):
 class QuizModelSerializer(serializers.ModelSerializer):
     difficulty_sets = DifficultySetSerializer(many = True)
     total_grades_after_randomizing = serializers.DecimalField(max_digits=6, decimal_places=2, read_only=True)
+
+    def validate(self, data):
+        if len(data['difficulty_sets']) == 0:
+            raise serializers.ValidationError('the quiz must have at least one "difficulty set".')
+        return data
 
     def validate_difficulty_sets(self, difficulty_sets):
 
