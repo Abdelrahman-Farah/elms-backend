@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Course, CourseAssignment, CourseLearner, Learner, Post, CourseEvent, AssignmentSubmission
+from .models import Course, CourseLearner, Learner, Post
 
 
 # Define serializer for enrolling in a course
@@ -87,58 +87,3 @@ class LearnerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Learner
         fields = ["id", "full_name", "email", "GPA"]
-
-
-class CourseEventSerializer(serializers.ModelSerializer):
-    event_id = serializers.CharField(read_only=True)
-
-    class Meta:
-        model = CourseEvent
-        fields = ['id', 'event_id', 'summary', 'description',
-                  'start_time', 'end_time']
-
-
-class CourseAssignmentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CourseAssignment
-        fields = ['id', 'title', 'description', 'due_date',
-                  'degree', 'file', 'Image', 'video', 'created_at']
-
-
-class AssignmentSubmissionSerializer(serializers.ModelSerializer):
-    score = serializers.IntegerField(read_only=True)
-
-    class Meta:
-        model = AssignmentSubmission
-        fields = ['id',
-                  'status',
-                  'notes',
-                  'score',
-                  'Image',
-                  'file',
-                  'video',
-                  ]
-
-
-class AssignmentSubmissionForOwnerSerializer(serializers.ModelSerializer):
-    student = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = AssignmentSubmission
-        fields = ['id',
-                  'student',
-                  'status',
-                  'score',
-                  'notes',
-                  'file',
-                  'video',
-                  'Image',
-                  'time',
-                  ]
-
-    def get_student(self, obj):
-        return {
-            "id": obj.student.id,
-            "username": obj.student.username,
-            "email": obj.student.email,
-        }

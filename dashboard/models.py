@@ -3,7 +3,6 @@ from django.conf import settings
 import string
 import random
 
-# Create your models here.
 
 
 # Define the Course model
@@ -89,51 +88,3 @@ class Post(models.Model):
     class Meta:
         ordering = ["created_at"]
 
-
-class CourseEvent(models.Model):
-    event_id = models.CharField(max_length=255, null=True, blank=True)
-    summary = models.CharField(max_length=255)
-    description = models.TextField()
-    start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
-    course = models.ForeignKey(
-        "Course", on_delete=models.CASCADE, related_name="course_events")
-
-
-class CourseAssignment(models.Model):
-    title = models.CharField(max_length=150)
-    description = models.TextField(null=True, blank=True)
-    file = models.FileField(upload_to="document-file", blank=True, null=True)
-    Image = models.ImageField(upload_to="post-image", blank=True, null=True)
-    video = models.FileField(upload_to="video", blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    due_date = models.DateTimeField(blank=False)
-    course = models.ForeignKey(
-        Course, on_delete=models.CASCADE, related_name="assignments")
-    degree = models.IntegerField(default=0)
-
-    def __str__(self) -> str:
-        return self.title
-
-    class Meta:
-        ordering = ["created_at"]
-
-
-class AssignmentSubmission(models.Model):
-    file = models.FileField(upload_to="document-file", blank=True, null=True)
-    Image = models.ImageField(upload_to="post-image", blank=True, null=True)
-    video = models.FileField(upload_to="video", blank=True, null=True)
-    status = models.BooleanField(default=False)
-    time = models.DateTimeField(auto_now_add=True)
-    notes = models.TextField(null=True, blank=True)
-    score = models.IntegerField(default=0)
-    courseassignment = models.ForeignKey(
-        CourseAssignment, on_delete=models.CASCADE, related_name="student_assignment")
-    student = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="student_workbooks")
-
-    def __str__(self) -> str:
-        return self.student.first_name
-
-    class Meta:
-        ordering = ["time"]

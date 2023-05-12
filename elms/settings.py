@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     'core',
     'corsheaders',
     'dashboard',
+    'assignments',
+    'events',
 ]
 
 MIDDLEWARE = [
