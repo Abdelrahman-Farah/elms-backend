@@ -14,5 +14,12 @@ course_router.register(
     'learners', views.CourseLearnerViewSet, basename='course_learner')
 course_router.register('events', views.CourseEventViewSet,
                        basename='course_event')
+course_router.register(
+    'assignments', views.CourseAssignmentViewSet, basename='course_assignment')
 
-urlpatterns = router.urls+course_router.urls
+assignment_router = routers.NestedDefaultRouter(
+    course_router, 'assignments', lookup='assignment')
+assignment_router.register(
+    'submissions', views.AssignmentSubmissionViewSet, basename='assignment_submission')
+
+urlpatterns = router.urls+course_router.urls+assignment_router.urls

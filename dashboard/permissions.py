@@ -31,3 +31,4 @@ class OwnerOnly(permissions.BasePermission):
         course_id = view.kwargs.get('course_pk')
         course = get_object_or_404(Course, id=course_id)
         return course.owner == request.user
+    
