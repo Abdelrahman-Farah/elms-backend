@@ -64,9 +64,6 @@ class CourseLearner(models.Model):
 class Post(models.Model):
     title = models.CharField(max_length=150)
     description = models.TextField(null=True, blank=True)
-    image = models.ImageField(upload_to="post-image", blank=True, null=True)
-    file = models.FileField(upload_to="document-file", blank=True, null=True)
-    video = models.FileField(upload_to="video", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="posts")
@@ -77,18 +74,14 @@ class Post(models.Model):
     class Meta:
         ordering = ["created_at"]
 
-
-"""
-class Comment(models.Model):
-    comment=models.TextField()
-    created_at=models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-    post=models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
-    learner=models.ForeignKey(CourseLearner, on_delete=models.CASCADE, related_name='comments')
+class PostFiles(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="files")
+    file = models.FileField(upload_to="document-file", blank=True, null=True)
+    file_type = models.CharField(max_length=150, blank=True, null=True)
+    title = models.CharField(max_length=200, blank=True, null=True)
 
     def __str__(self) -> str:
-        return self.comment
-    
+        return self.post.title
+
     class Meta:
-        ordering = ['created_at']
-        """
+        ordering = ["post"]

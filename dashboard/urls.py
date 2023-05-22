@@ -8,7 +8,11 @@ router.register('enrollments', views.CourseEnrollViewSet, basename= 'course-enro
 
 course_router= routers.NestedDefaultRouter(router, 'course', lookup='course')
 course_router.register('post', views.PostViewSet, basename= 'course_post')
+
+post_router= routers.NestedDefaultRouter(course_router, 'post', lookup='post')
+post_router.register('files', views.PostFilesViewSet, basename= 'post_files')
+
 course_router.register('learners', views.CourseLearnerViewSet, basename= 'course_learner')
 
 
-urlpatterns =router.urls+course_router.urls
+urlpatterns =router.urls+course_router.urls+post_router.urls

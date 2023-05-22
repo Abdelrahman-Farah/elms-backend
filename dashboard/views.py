@@ -9,8 +9,10 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework.viewsets import ModelViewSet
 
 from .permissions import IsOwnerOrReadOnly, OwnerOnly, EnrolledStudentsOnly
-from .serializers import CourseEnrollSerializer, CourseLearnerSerializer, CourseSerializer, PostSerializer
-from .models import Course, CourseLearner, Post, Learner
+from .serializers import CourseEnrollSerializer, CourseLearnerSerializer, CourseSerializer, PostSerializer, PostFilesSerializer
+from .models import Course, CourseLearner, Post, Learner, PostFiles
+from rest_framework.parsers import MultiPartParser
+
 
 
 # Create your views here.
@@ -18,6 +20,11 @@ from .models import Course, CourseLearner, Post, Learner
 # Viewset for managing courses
 class CourseViewSet(ModelViewSet):
     serializer_class = CourseSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
 
     # Set permissions for the viewset based on the action being performed.
     def get_permissions(self):
@@ -45,8 +52,8 @@ class CourseViewSet(ModelViewSet):
         
         learner_courses = queryset.exclude(owner=request.user)
 
-        first_serializer = CourseSerializer(owner_courses, many=True)
-        second_serializer = CourseSerializer(learner_courses, many=True)
+        first_serializer = CourseSerializer(owner_courses, many=True, context={"request": request})
+        second_serializer = CourseSerializer(learner_courses, many=True, context={"request": request})
 
         response_data = {
             "owner_courses": first_serializer.data,
@@ -80,16 +87,23 @@ class CourseViewSet(ModelViewSet):
 class PostViewSet(ModelViewSet):
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated, OwnerOnly, EnrolledStudentsOnly]
+    parser_classes = [MultiPartParser]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
 
     # Get the posts queryset based on the course id provided in the URL
     def get_queryset(self):
         course_id = self.kwargs["course_pk"]
-        queryset = Post.objects.filter(course_id=course_id)
+        queryset = Post.objects.select_related('course').prefetch_related('files').filter(course_id=course_id)
         return queryset
 
     # Create a new post for a given course
     def create(self, request, course_pk=None):
-        serializer = self.get_serializer(data=request.data)
+        files = request.FILES.getlist('files', None)
+        serializer = self.get_serializer(data=request.data, context={'files': files})
         serializer.is_valid(raise_exception=True)
         course = get_object_or_404(Course, id=course_pk)
         serializer.save(owner=request.user, course=course)
@@ -137,4 +151,15 @@ class CourseLearnerViewSet(RetrieveModelMixin, ListModelMixin, DestroyModelMixin
     def get_queryset(self):
         course_id = self.kwargs["course_pk"]
         queryset = CourseLearner.objects.filter(course_id=course_id).select_related('learner__user')
+        return queryset
+
+class PostFilesViewSet(ModelViewSet):
+    serializer_class = PostFilesSerializer
+
+    def get_serializer_context(self):
+        return {'post_id': self.kwargs['post_pk']}
+
+    def get_queryset(self):
+        post_id = self.kwargs["post_pk"]
+        queryset = PostFiles.objects.filter(post_id=post_id)
         return queryset
