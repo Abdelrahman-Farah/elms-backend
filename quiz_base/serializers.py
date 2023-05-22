@@ -48,9 +48,9 @@ class DifficultySetSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('The number of used questions from this set must not be negative.')
 
         if data['is_mandatory'] == True and data['number_of_used_questions_from_this_set'] != len(data['questions']):
-            raise serializers.ValidationError('This set is mandatory, So the number_of_used_questions_from_this_set must be equal to the number of all questions.')
+            raise serializers.ValidationError('This set is mandatory, So the "Number of used questions from this set" must be equal to the number of all questions.')
 
-        # TODO: when is_mandatory=false and points are not equal
+        # when is_mandatory=false and points are not equal
         if data['is_mandatory'] == False:
             points = data['questions'][0]['points']
             is_same_points = True
@@ -61,7 +61,10 @@ class DifficultySetSerializer(serializers.ModelSerializer):
                     break
 
             if is_same_points == False:
-                raise serializers.ValidationError('This set is not mandatory (i.e. questions will be different for students) and the questions in this set have different points so you may end up with different total grade for each student')
+                raise serializers.ValidationError([
+                    'This set is not mandatory (i.e. questions will be different for students) and the questions in this set have different points so you may end up with different total grade for each student',
+                    'Tip: Set the same value for all questions points.'
+                ])
 
         return data
 
@@ -77,23 +80,12 @@ class QuizModelSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         if len(data['difficulty_sets']) == 0:
-            raise serializers.ValidationError('the quiz must have at least one "difficulty set".')
+            raise serializers.ValidationError('The quiz must have at least one "difficulty set".')
         return data
-
-    def validate_difficulty_sets(self, difficulty_sets):
-
-        mandatory_sets = 0
-        for set in difficulty_sets:
-            mandatory_sets += set['is_mandatory']
-
-        if mandatory_sets > 1:
-            raise serializers.ValidationError('This quiz has more than one mandatory sets.')
-
-        return difficulty_sets
 
     class Meta:
         model = QuizModel
-        fields = ['id', 'title', 'description', 'start_date', 'duration_in_minutes', 'total_grades_after_randomizing', 'difficulty_sets']
+        fields = ['id', 'classroom', 'title', 'description', 'start_date', 'duration_in_minutes', 'total_grades_after_randomizing', 'difficulty_sets']
 
 
     def create(self, validated_data):
@@ -128,3 +120,12 @@ class QuizModelSerializer(serializers.ModelSerializer):
             QuizModel.objects.filter(pk=quiz_model.id).update(total_grades_after_randomizing=grades_counter)
             quiz_model.total_grades_after_randomizing = grades_counter
             return quiz_model
+
+
+
+
+
+class SimpleQuizModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QuizModel
+        fields = fields = ['id', 'title', 'description', 'start_date', 'duration_in_minutes', 'total_grades_after_randomizing']

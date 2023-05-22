@@ -29,9 +29,7 @@ urlpatterns = [
     path('core/', include('core.urls')),
     path('dashboard/', include('dashboard.urls')),
 
-    path('quiz_base/', include('quiz_base.urls')),
-    path('quiz/', include('quiz.urls')),
-    # path('api-auth/', include('rest_framework.urls')),
+    path('api-auth/', include('rest_framework.urls')),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

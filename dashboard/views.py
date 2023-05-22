@@ -49,7 +49,7 @@ class CourseViewSet(ModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
 
         owner_courses = queryset.filter(owner=request.user)
-        
+
         learner_courses = queryset.exclude(owner=request.user)
 
         first_serializer = CourseSerializer(owner_courses, many=True, context={"request": request})
@@ -163,3 +163,21 @@ class PostFilesViewSet(ModelViewSet):
         post_id = self.kwargs["post_pk"]
         queryset = PostFiles.objects.filter(post_id=post_id)
         return queryset
+
+class IsOwnerViewSet(ListModelMixin, GenericViewSet):
+    def list(self, request, *args, **kwargs):
+        user_id = self.request.user.id
+        classroom_id = self.kwargs['course_pk']
+
+        if user_id == None:
+            return Response({"is-owner": False}, status=status.HTTP_401_UNAUTHORIZED)
+
+        queryset = Course.objects.filter(pk = classroom_id)
+        if not queryset:
+            return Response({"is-owner": False}, status=status.HTTP_400_BAD_REQUEST)
+
+        classroom = queryset[0]
+        if classroom.owner.id == user_id:
+            return Response({"is-owner": True}, status=status.HTTP_200_OK)
+        else:
+            return Response({"is-owner": False}, status=status.HTTP_403_FORBIDDEN)

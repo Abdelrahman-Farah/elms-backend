@@ -1,7 +1,11 @@
 from django.db import models
 
+from dashboard.models import Course
+from .managers import QuizModelManager
 
 class QuizModel(models.Model):
+    objects = QuizModelManager()
+    classroom = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='quizzes')
     title = models.CharField(max_length=128)
     description = models.TextField(blank=True)
     start_date = models.DateTimeField()

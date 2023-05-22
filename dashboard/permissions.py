@@ -1,32 +1,32 @@
 from rest_framework import permissions
-from .models import Course,CourseLearner,Learner
+from .models import Course, Learner, CourseLearner
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
-    """ 
-        Custom permission class to allow owners to edit and view courses, 
+    """
+        Custom permission class to allow owners to edit and view courses,
         but only allow others to view courses.
     """
     def has_permission(self, request, view):
         if request.method in permissions.SAFE_METHODS:
             return True
         return request.user.is_authenticated
-    
+
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS or request.method == 'DELETE':
             return True
         return request.user == obj.owner
-    
+
 
 
 class OwnerOnly(permissions.BasePermission):
-    """ 
+    """
     Custom permission class to only allow owners of a course to create posts related to that course.
     """
     def has_permission(self, request, view):
-        if request.method in ['GET', 'HEAD', 'OPTIONS']:
+        if request.method in permissions.SAFE_METHODS:
             return True
-        
+
         course_id = view.kwargs.get('course_pk')
         course = Course.objects.select_related('owner').filter(id=course_id)
         return course[0].owner == request.user
