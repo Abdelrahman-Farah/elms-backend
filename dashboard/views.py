@@ -42,7 +42,7 @@ class CourseViewSet(ModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
 
         owner_courses = queryset.filter(owner=request.user)
-        
+
         learner_courses = queryset.exclude(owner=request.user)
 
         first_serializer = CourseSerializer(owner_courses, many=True)
@@ -138,3 +138,22 @@ class CourseLearnerViewSet(RetrieveModelMixin, ListModelMixin, DestroyModelMixin
         course_id = self.kwargs["course_pk"]
         queryset = CourseLearner.objects.filter(course_id=course_id).select_related('learner__user')
         return queryset
+
+
+class IsOwnerViewSet(ListModelMixin, GenericViewSet):
+    def list(self, request, *args, **kwargs):
+        user_id = self.request.user.id
+        classroom_id = self.kwargs['course_pk']
+
+        if user_id == None:
+            return Response({"is-owner": False}, status=status.HTTP_401_UNAUTHORIZED)
+
+        queryset = Course.objects.filter(pk = classroom_id)
+        if not queryset:
+            return Response({"is-owner": False}, status=status.HTTP_400_BAD_REQUEST)
+
+        classroom = queryset[0]
+        if classroom.owner.id == user_id:
+            return Response({"is-owner": True}, status=status.HTTP_200_OK)
+        else:
+            return Response({"is-owner": False}, status=status.HTTP_403_FORBIDDEN)
