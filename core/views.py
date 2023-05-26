@@ -57,7 +57,7 @@ class CustomResetPasswordView(APIView):
         queryset = self.User.objects.filter(email = email)
 
         if not queryset:
-            return Response("", status=status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         user = queryset[0]
         active = user.is_active
@@ -76,4 +76,4 @@ class CustomResetPasswordView(APIView):
             user.is_active = False
             user.save()
 
-        return Response("", status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)

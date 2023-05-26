@@ -22,5 +22,5 @@ class OwnerOrEnrolledRead(permissions.BasePermission):
 
             return CourseLearner.objects.filter(course=course_id, learner=learner[0]).exists()
         else:
-            self.message = 'You don\'t have the permisstion to create new quiz in this classroom.'
+            self.message = 'You don\'t have the permisstion to do this operation in this classroom.'
             return False

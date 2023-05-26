@@ -25,8 +25,7 @@ class CreateRandomQuizSerializer(serializers.Serializer):
 
 
         if Quiz.objects.filter(quiz_model_id=quiz_model_id, user_id=user_id).exists():
-            # Quiz.objects.filter(quiz_model_id=quiz_model_id, user_id=user_id).delete()
-            raise serializers.ValidationError('You can\'t take the quiz twice.')
+            raise serializers.ValidationError('You can\'t make two copies of the quiz.')
 
         return data
 
@@ -84,6 +83,10 @@ class RandomQuestionSerializer(serializers.ModelSerializer):
         fields = ['random_question_id', 'body', 'points', 'choices']
 
 class RandomQuizSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(max_length = 128, source='quiz_model.title')
+    start_date = serializers.DateTimeField(source='quiz_model.start_date')
+    duration_in_minutes = serializers.IntegerField(source='quiz_model.duration_in_minutes')
+    total_points = serializers.DecimalField(max_digits=6, decimal_places=2, source='quiz_model.total_grades_after_randomizing')
     random_questions =  serializers.SerializerMethodField()
 
     def get_random_questions(self, obj):
@@ -100,7 +103,7 @@ class RandomQuizSerializer(serializers.ModelSerializer):
         return questions
     class Meta:
         model = Quiz
-        fields = ['id', 'random_questions']
+        fields = ['id', 'title', 'start_date', 'duration_in_minutes', 'total_points', 'random_questions']
 ###############################################################################
 
 

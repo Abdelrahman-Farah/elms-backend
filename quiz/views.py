@@ -6,18 +6,18 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, ListModelMixin
 
-from dashboard.models import Course
+from dashboard.models import Course, CourseLearner
 from quiz_base.models import QuizModel
 
 from .serializers import CreateRandomQuizSerializer, RandomQuizSerializer
 from .serializers import NewSubmissionSerializer
 from .serializers import ResultSerializer, SimpleQuizModelSerializer, AllResultsSerializer
 from .models import Quiz
-from .permissions import OwnerOrEnrolled, OwnerOnly
+from .permissions import OwnerOrEnrolled, OwnerOnly, ValidQuizInClassroom, OnGoingQuiz, NotSubmittedBefore, FinishedQuiz
 
 
 class TakeQuizViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet):
-    permission_classes = [IsAuthenticated, OwnerOrEnrolled]
+    permission_classes = [IsAuthenticated, OwnerOrEnrolled, ValidQuizInClassroom, OnGoingQuiz, NotSubmittedBefore]
 
     def get_queryset(self):
         user_id = self.request.user.id
@@ -32,7 +32,7 @@ class TakeQuizViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, Gene
     def list(self, request, *args, **kwargs):
         if not self.get_queryset():
             # Didn't take the quiz before
-            return Response("", status=status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         random_quiz_serializer = RandomQuizSerializer(self.get_queryset()[0])
         return Response(random_quiz_serializer.data, status=status.HTTP_200_OK)
@@ -58,7 +58,7 @@ class TakeQuizViewSet(CreateModelMixin, RetrieveModelMixin, ListModelMixin, Gene
 
 
 class SubmitQuizViewSet(CreateModelMixin, GenericViewSet):
-    permission_classes = [IsAuthenticated, OwnerOrEnrolled]
+    permission_classes = [IsAuthenticated, OwnerOrEnrolled, ValidQuizInClassroom, OnGoingQuiz, NotSubmittedBefore]
 
     serializer_class = NewSubmissionSerializer
 
@@ -84,9 +84,8 @@ class SubmitQuizViewSet(CreateModelMixin, GenericViewSet):
 
 
 
-
 class QuizResultViewSet(ListModelMixin, GenericViewSet):
-    permission_classes = [IsAuthenticated, OwnerOrEnrolled]
+    permission_classes = [IsAuthenticated, OwnerOrEnrolled, ValidQuizInClassroom, FinishedQuiz]
 
     def get_queryset(self):
         user_id = self.request.user.id
@@ -110,15 +109,25 @@ class QuizResultViewSet(ListModelMixin, GenericViewSet):
         user_id = self.request.user.id
 
         is_owner = user_id == Course.objects.select_related('owner').get(pk=kwargs['course_pk']).owner.id
-        if not is_owner and not self.get_queryset():
-            # TODO: NO CONTENT?
-            return Response({"detail": ['You didn\'t submit this quiz.']}, status=status.HTTP_204_NO_CONTENT)
 
         quiz_model_id = self.kwargs['quiz_model_pk'],
         quiz_model = QuizModel.objects.get(pk=quiz_model_id[0])
         quiz_model_serializer = SimpleQuizModelSerializer(quiz_model)
 
         if not is_owner:
+            if not self.get_queryset():
+                serializer = CreateRandomQuizSerializer(
+                    data={},
+                    context = {
+                        'user_id': self.request.user.id,
+                        'classroom_id': self.kwargs['course_pk'],
+                        'quiz_model_id': self.kwargs['quiz_model_pk'],
+                    }
+                )
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+
+
             solutions_serializer = ResultSerializer(self.get_queryset()[0])
             response_data = {
                 **quiz_model_serializer.data,
@@ -127,8 +136,22 @@ class QuizResultViewSet(ListModelMixin, GenericViewSet):
             return Response(response_data, status=status.HTTP_200_OK)
 
         else:
-            students_info = super().list(request, *args, **kwargs)
+            queryset = CourseLearner.objects.filter(course = self.kwargs['course_pk'])
+            for course_learner in queryset:
+                user_id = course_learner.learner.user.id
+                if Quiz.objects.select_related('user').filter(quiz_model=quiz_model_id, user=user_id).exists() == False:
+                    serializer = CreateRandomQuizSerializer(
+                        data={},
+                        context = {
+                            'user_id': user_id,
+                            'classroom_id': self.kwargs['course_pk'],
+                            'quiz_model_id': self.kwargs['quiz_model_pk'],
+                        }
+                    )
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save()
 
+            students_info = super().list(request, *args, **kwargs)
             response_data = {
                 **quiz_model_serializer.data,
                 "students_info": students_info.data
@@ -136,9 +159,10 @@ class QuizResultViewSet(ListModelMixin, GenericViewSet):
             return Response(response_data, status=status.HTTP_200_OK)
 
 
+
 class DownloadResultViewSet(ListModelMixin, GenericViewSet):
 
-    permission_classes = [IsAuthenticated, OwnerOnly]
+    permission_classes = [IsAuthenticated, OwnerOnly, ValidQuizInClassroom, FinishedQuiz]
 
     def get_queryset(self):
         quiz_model_id = self.kwargs['quiz_model_pk'],
@@ -155,6 +179,7 @@ class DownloadResultViewSet(ListModelMixin, GenericViewSet):
         writer = csv.writer(response)
         writer.writerow(['Student Name', 'Email', 'Score'])
 
+        #TODO: fill before query set
         queryset = self.get_queryset()
         for quiz in queryset:
             full_name = quiz.user.first_name + " " + quiz.user.last_name
