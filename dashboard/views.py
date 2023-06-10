@@ -1,22 +1,32 @@
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, ListModelMixin, DestroyModelMixin
+from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, ListModelMixin,DestroyModelMixin
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.viewsets import ModelViewSet
-from .permissions import IsOwnerOrReadOnly, OwnerOnly
-from .serializers import CourseEnrollSerializer, CourseLearnerSerializer, CourseSerializer, PostSerializer, LearnerSerializer
-from .models import Course, CourseLearner, Post, Learner
 
+from .permissions import IsOwnerOrReadOnly, OwnerOnly, EnrolledStudentsOnly
+from .serializers import CourseEnrollSerializer, CourseLearnerSerializer, CourseSerializer, PostSerializer, PostFilesSerializer
+from .models import Course, CourseLearner, Post, Learner, PostFiles
+from rest_framework.parsers import MultiPartParser
+from rest_framework.filters import SearchFilter
+
+
+# Create your views here.
 
 # Viewset for managing courses
-
-
 class CourseViewSet(ModelViewSet):
     serializer_class = CourseSerializer
+    filter_backends = [SearchFilter]
+    search_fields = ['title', 'description']
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
 
     # Set permissions for the viewset based on the action being performed.
     def get_permissions(self):
@@ -32,7 +42,7 @@ class CourseViewSet(ModelViewSet):
         if user.is_authenticated:
             queryset = Course.objects.filter(
                 Q(owner=user) | Q(course_learners__learner__user=user)
-            ).distinct()
+            ).distinct().select_related("owner")
             return queryset
         return Course.objects.none()
 
@@ -41,10 +51,11 @@ class CourseViewSet(ModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
 
         owner_courses = queryset.filter(owner=request.user)
+
         learner_courses = queryset.exclude(owner=request.user)
 
-        first_serializer = CourseSerializer(owner_courses, many=True)
-        second_serializer = CourseSerializer(learner_courses, many=True)
+        first_serializer = CourseSerializer(owner_courses, many=True, context={"request": request})
+        second_serializer = CourseSerializer(learner_courses, many=True, context={"request": request})
 
         response_data = {
             "owner_courses": first_serializer.data,
@@ -75,21 +86,26 @@ class CourseViewSet(ModelViewSet):
         )
 
 # Viewset for managing posts
-
-
 class PostViewSet(ModelViewSet):
     serializer_class = PostSerializer
-    permission_classes = [IsAuthenticated, OwnerOnly]
+    permission_classes = [IsAuthenticated, OwnerOnly, EnrolledStudentsOnly]
+    parser_classes = [MultiPartParser]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
 
     # Get the posts queryset based on the course id provided in the URL
     def get_queryset(self):
         course_id = self.kwargs["course_pk"]
-        queryset = Post.objects.filter(course_id=course_id)
+        queryset = Post.objects.select_related('course').prefetch_related('files').filter(course_id=course_id)
         return queryset
 
     # Create a new post for a given course
     def create(self, request, course_pk=None):
-        serializer = self.get_serializer(data=request.data)
+        files = request.FILES.getlist('files', None)
+        serializer = self.get_serializer(data=request.data, context={'files': files})
         serializer.is_valid(raise_exception=True)
         course = get_object_or_404(Course, id=course_pk)
         serializer.save(owner=request.user, course=course)
@@ -99,8 +115,6 @@ class PostViewSet(ModelViewSet):
         )
 
 # Viewset for managing course enrollments
-
-
 class CourseEnrollViewSet(CreateModelMixin, GenericViewSet):
     queryset = Course.objects.all()
     serializer_class = CourseEnrollSerializer
@@ -116,7 +130,7 @@ class CourseEnrollViewSet(CreateModelMixin, GenericViewSet):
             course = Course.objects.get(join_code=join_code)
         except Course.DoesNotExist:
             return Response(
-                {"error": "Invalid enroll code"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": "Invalid enroll code"}, status=status.HTTP_406_NOT_ACCEPTABLE
             )
 
         learner, created = Learner.objects.get_or_create(user=request.user)
@@ -124,15 +138,13 @@ class CourseEnrollViewSet(CreateModelMixin, GenericViewSet):
             learner.save()
 
         if CourseLearner.objects.filter(learner=learner, course=course).exists():
-            return Response({"detail": "User is already subscribed to this course."})
+            return Response({"detail": "User is already subscribed to this course."}, status=status.HTTP_409_CONFLICT)
 
         subscribers = CourseLearner(learner=learner, course=course)
         subscribers.save()
-        return Response({"detail": f"Successfully enrolled in course"})
+        return Response({"detail": f"Successfully enrolled in course"}, status=status.HTTP_201_CREATED)
 
 # Viewset for Course Learner
-
-
 class CourseLearnerViewSet(RetrieveModelMixin, ListModelMixin, DestroyModelMixin, GenericViewSet):
     serializer_class = CourseLearnerSerializer
     permission_classes = [IsAuthenticated, OwnerOnly]
@@ -140,11 +152,34 @@ class CourseLearnerViewSet(RetrieveModelMixin, ListModelMixin, DestroyModelMixin
     # Get the Learners queryset based on the course id provided in the URL
     def get_queryset(self):
         course_id = self.kwargs["course_pk"]
-        queryset = CourseLearner.objects.filter(
-            course_id=course_id).select_related('learner__user')
+        queryset = CourseLearner.objects.filter(course_id=course_id).select_related('learner__user')
         return queryset
 
+class PostFilesViewSet(ModelViewSet):
+    serializer_class = PostFilesSerializer
 
-class LearnerViewSet(ModelViewSet):
-    queryset = Learner.objects.select_related('user').order_by('GPA').all()
-    serializer_class = LearnerSerializer
+    def get_serializer_context(self):
+        return {'post_id': self.kwargs['post_pk']}
+
+    def get_queryset(self):
+        post_id = self.kwargs["post_pk"]
+        queryset = PostFiles.objects.filter(post_id=post_id)
+        return queryset
+
+class IsOwnerViewSet(ListModelMixin, GenericViewSet):
+    def list(self, request, *args, **kwargs):
+        user_id = self.request.user.id
+        classroom_id = self.kwargs['course_pk']
+
+        if user_id == None:
+            return Response({"is-owner": False}, status=status.HTTP_401_UNAUTHORIZED)
+
+        queryset = Course.objects.filter(pk = classroom_id)
+        if not queryset:
+            return Response({"is-owner": False}, status=status.HTTP_400_BAD_REQUEST)
+
+        classroom = queryset[0]
+        if classroom.owner.id == user_id:
+            return Response({"is-owner": True}, status=status.HTTP_200_OK)
+        else:
+            return Response({"is-owner": False}, status=status.HTTP_403_FORBIDDEN)

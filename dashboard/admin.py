@@ -6,8 +6,6 @@ from . import models
 # Register your models here.
 
 # Define an inline for the Post model to be displayed within CourseAdmin
-
-
 class PostInline(admin.StackedInline):
     model = models.Post
     min_num = 0
@@ -18,15 +16,12 @@ class PostInline(admin.StackedInline):
         return models.Post.objects.none()
 
 # Define an inline for the CourseLearner model to be displayed within CourseAdmin
-
-
 class CourseLearnerInline(admin.StackedInline):
     model = models.CourseLearner
     min_num = 0
     extra = 0
-    
-    # Override get_queryset method to return no objects initially
 
+    # Override get_queryset method to return no objects initially
     def get_queryset(self, request):
         return models.CourseLearner.objects.none()
 
@@ -49,7 +44,6 @@ class CourseAdmin(admin.ModelAdmin):
     inlines = [CourseLearnerInline, PostInline]
 
     # Override get_queryset method to prefetch related objects for optimization
-
     def get_queryset(self, request):
         return (
             super().get_queryset(request).prefetch_related("posts", "course_learners")
@@ -66,8 +60,7 @@ class CourseAdmin(admin.ModelAdmin):
 
     # Define a custom method to display the number of learners in the course
     def get_posts_count(self, course):
-        url = reverse("admin:dashboard_post_changelist") + \
-            f"?course_id={course.id}"
+        url = reverse("admin:dashboard_post_changelist") + f"?course_id={course.id}"
         count = course.posts.count()
         return format_html(f'<a href="{url}">{count}</a>')
 
@@ -95,7 +88,4 @@ class PostAdmin(admin.ModelAdmin):
         return Post.course.title
 
 
-@admin.register(models.Learner)
-class LearnerAdmin(admin.ModelAdmin):
-    list_display = ["user", "GPA"]
-    ordering = ["user"]
+admin.site.register(models.Learner)

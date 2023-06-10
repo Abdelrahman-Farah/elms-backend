@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'dashboard',
     'assignments',
     'events',
+    'quiz_base',
+    'quiz',
 ]
 
 MIDDLEWARE = [
@@ -66,9 +68,14 @@ INTERNAL_IPS = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
     'http://localhost:5173',
     "http://127.0.0.1:5173",
 ]
+CORS_ALLOW_ALL_ORIGINS = True
+ALLOWED_HOSTS = ['*']
+
+
 
 ROOT_URLCONF = 'elms.urls'
 
@@ -126,6 +133,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 REST_FRAMEWORK = {
+    # 'NON_FIELD_ERRORS_KEY': 'general_errors',
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
@@ -133,15 +141,31 @@ REST_FRAMEWORK = {
 
 SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('JWT',),
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1)
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=30)
 }
 
 DJOSER = {
+    'ACTIVATION_URL': 'activate-user-account/{uid}/{token}',
+    'PASSWORD_RESET_CONFIRM_URL': 'confirm-password-reset/{uid}/{token}',
+    'SEND_ACTIVATION_EMAIL': True,
     'SERIALIZERS': {
         'user_create': 'core.serializers.UserCreateSerializer',
         'current_user': 'core.serializers.UserSerializer',
+    },
+    'EMAIL': {
+        'activation': "core.emails.ActivationEmail",
+        'password_reset': 'core.emails.PasswordResetEmail',
     }
 }
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
+EMAIL_HOST_USER = 'elms.gp.app@gmail.com'
+EMAIL_HOST_PASSWORD = 'yjhexxgpjgvhpoql'
 
 
 # Internationalization
@@ -149,7 +173,7 @@ DJOSER = {
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Africa/Cairo'
 
 USE_I18N = True
 
@@ -160,6 +184,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 

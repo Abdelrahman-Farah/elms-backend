@@ -26,7 +26,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
-    path('dashboard/', include('dashboard.urls')),
     path('core/', include('core.urls')),
-    # path('api-auth/', include('rest_framework.urls')),
-]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    path('dashboard/', include('dashboard.urls')),
+
+    path('api-auth/', include('rest_framework.urls')),
+]
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

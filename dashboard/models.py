@@ -1,8 +1,8 @@
 from django.db import models
 from django.conf import settings
-import string
-import random
+import string, random
 
+# Create your models here.
 
 
 # Define the Course model
@@ -37,17 +37,7 @@ class Course(models.Model):
 
 # Define the Learner model
 class Learner(models.Model):
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    GPA = models.DecimalField(max_digits=3, decimal_places=2, blank=True)
-
-    # Override the save method of the Course model to generate a random GPA
-    def save(self, *args, **kwargs):
-        if not self.GPA:
-            gpa = random.randint(180, 390)
-            self.GPA = gpa/100
-
-        return super().save(*args, **kwargs)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     def __str__(self) -> str:
         return self.user.username
@@ -74,13 +64,9 @@ class CourseLearner(models.Model):
 class Post(models.Model):
     title = models.CharField(max_length=150)
     description = models.TextField(null=True, blank=True)
-    image = models.ImageField(upload_to="post-image", blank=True, null=True)
-    file = models.FileField(upload_to="document-file", blank=True, null=True)
-    video = models.FileField(upload_to="video", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
-    course = models.ForeignKey(
-        Course, on_delete=models.CASCADE, related_name="posts")
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="posts")
 
     def __str__(self) -> str:
         return self.title
@@ -88,3 +74,14 @@ class Post(models.Model):
     class Meta:
         ordering = ["created_at"]
 
+class PostFiles(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="files")
+    file = models.FileField(upload_to="document-file", blank=True, null=True)
+    file_type = models.CharField(max_length=150, blank=True, null=True)
+    title = models.CharField(max_length=200, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return self.post.title
+
+    class Meta:
+        ordering = ["post"]
