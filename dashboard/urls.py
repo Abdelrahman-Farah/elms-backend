@@ -1,10 +1,8 @@
-from quiz_base.urls import urlpatterns as quiz_base_patterns
 from rest_framework_nested import routers
 from . import views
 
 
-from events.urls import urlpatterns as event
-from assignments.urls import urlpatterns as assignment
+
 router = routers.DefaultRouter()
 
 router.register('course', views.CourseViewSet, basename='course')
@@ -22,7 +20,8 @@ course_router.register(
 
 course_router.register('is-owner', views.IsOwnerViewSet,
                        basename='course_is-owner')
-
-
+from quiz_base.urls import urlpatterns as quiz_base_patterns
+from events.urls import urlpatterns as event
+from assignments.urls import urlpatterns as assignment
 urlpatterns = router.urls + course_router.urls + \
     post_router.urls + quiz_base_patterns + assignment + event
