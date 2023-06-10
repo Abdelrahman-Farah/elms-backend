@@ -9,3 +9,13 @@ class CourseEventSerializer(serializers.ModelSerializer):
         model = CourseEvent
         fields = ['id', 'event_id', 'summary', 'description',
                   'start_time', 'end_time']
+
+
+class UserEventSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(source='summary')
+    start = serializers.DateTimeField(source='start_time')
+    end = serializers.DateTimeField(source='end_time')
+
+    class Meta:
+        model = CourseEvent
+        fields = ['id', 'title', 'start', 'end']

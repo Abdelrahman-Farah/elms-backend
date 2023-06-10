@@ -3,7 +3,7 @@ from core.models import User
 from dashboard.models import Course, CourseLearner
 from dashboard.permissions import OwnerOnly
 from django.shortcuts import get_object_or_404
-from events.serializers import CourseEventSerializer
+from events.serializers import CourseEventSerializer, UserEventSerializer
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -13,6 +13,8 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 import json
 import requests
+from django.db.models import Q
+
 
 # TOP SECRET STUFF
 CLIENT_ID = '299051002384-j2r35j9lhn9dq11u8f04qgjbg7bknm0c.apps.googleusercontent.com'
@@ -22,12 +24,15 @@ CLIENT_SECRET = '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'
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
 
+service_account_file = 'events/serviceAccount.json'
+
+
 class CourseEventViewSet(ModelViewSet):
     queryset = CourseEvent.objects.all()
     serializer_class = CourseEventSerializer
     permission_classes = [IsAuthenticated, OwnerOnly]
 
-    def get_create_credentials(self):
+    def get_create_credentials(self, code):
         """
         Obtain Google OAuth2 credentials from authorization code.
 
@@ -44,8 +49,8 @@ class CourseEventViewSet(ModelViewSet):
         user = User.objects.get(id=self.request.user.id)
         url = 'https://oauth2.googleapis.com/token'
         REDIRECT_URI = 'http://localhost:3000'
-        form_data = json.loads(self.request.body.decode())
-        code = form_data.get('code')
+        # form_data = json.loads(self.request.body.decode())
+        # code = form_data.get('code')
         data = {
             'code': code,
             'client_id': CLIENT_ID,
@@ -72,7 +77,9 @@ class CourseEventViewSet(ModelViewSet):
         Returns:
         A `Credentials` object.
         """
-
+        if not self.request.user.has_gmail:
+            code = '4/0AbUR2VMP_tQ9o1WYCD3zRNSwxaenDBbGKbFAoAea6Kw-mq7FGqrmU-YdI81Z-MMu90xkVw'
+            self.get_create_credentials(code)
         # Get user
         user = User.objects.get(id=self.request.user.id)
         info = {
@@ -82,13 +89,21 @@ class CourseEventViewSet(ModelViewSet):
             'client_secret': CLIENT_SECRET
         }
         credentials = Credentials.from_authorized_user_info(info, SCOPES)
-        if not credentials or not credentials.valid:
-            if credentials and credentials.expired and credentials.refresh_token:
-                credentials.refresh(Request())
-            else:
-                return
-        user.Grefresh_token = credentials.refresh_token
-        user.save()
+        url = 'https://oauth2.googleapis.com/token'
+        if credentials.expired:
+            payload = {
+                'client_id': CLIENT_ID,
+                'client_secret': CLIENT_SECRET,
+                'refresh_token': user.Grefresh_token,
+                'grant_type': 'refresh_token'
+            }
+            response = requests.post(url, data=payload)
+            token_data = response.json()
+            credentials.token = token_data['access_token']
+            user.Gaccess_token = token_data['access_token']
+            user.save()
+            info['access_token'] = token_data['access_token']
+
         return credentials
 
     def create(self, request, *args, **kwargs):
@@ -114,15 +129,14 @@ class CourseEventViewSet(ModelViewSet):
 
         # Retrieve user credentials and check if they are valid
         credentials = self.get_credentials()
-        if credentials.valid:
+
+        if not credentials.valid:
             # Retrieve attendee information and create event object for Google Calendar API
             attendees = []
             for attendee in CourseLearner.objects.filter(
                     course_id=course_id).select_related('learner__user'):
                 attendees.append({'email': attendee.learner.user.email})
-
             service = build('calendar', 'v3', credentials=credentials)
-
             event = {
                 'summary': serializer.validated_data['summary'],
                 'description': serializer.validated_data['description'],
@@ -167,3 +181,14 @@ class CourseEventViewSet(ModelViewSet):
         except:
             pass
         return super().perform_destroy(instance)
+
+
+class UserEventViewSet(ModelViewSet):
+    serializer_class = UserEventSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = CourseEvent.objects.filter(
+            Q(course__owner=user) | Q(course__course_learners__learner__user=user)).select_related('course').select_related('course__owner').distinct()
+        return queryset
