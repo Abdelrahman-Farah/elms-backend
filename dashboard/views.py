@@ -12,7 +12,7 @@ from .permissions import IsOwnerOrReadOnly, OwnerOnly, EnrolledStudentsOnly
 from .serializers import CourseEnrollSerializer, CourseLearnerSerializer, CourseSerializer, PostSerializer, PostFilesSerializer
 from .models import Course, CourseLearner, Post, Learner, PostFiles
 from rest_framework.parsers import MultiPartParser
-
+from rest_framework.filters import SearchFilter
 
 
 # Create your views here.
@@ -20,6 +20,8 @@ from rest_framework.parsers import MultiPartParser
 # Viewset for managing courses
 class CourseViewSet(ModelViewSet):
     serializer_class = CourseSerializer
+    filter_backends = [SearchFilter]
+    search_fields = ['title', 'description']
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
