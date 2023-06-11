@@ -1,3 +1,4 @@
+```
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -173,3 +174,4 @@ seeds/django_admin_log.sql
 seeds/django_content_type.sql
 seeds/django_migrations.sql
 seeds/django_session.sql
+```
