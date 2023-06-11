@@ -107,7 +107,7 @@ DATABASES = {
         'NAME': 'elms',
         'HOST': 'localhost',
         'USER': 'root',
-        'PASSWORD': 'root'
+        'PASSWORD': 'elms2023@O6U'
     }
 }
 
