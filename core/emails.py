@@ -12,8 +12,8 @@ class ActivationEmail(BaseEmailMessage):
         context["uid"] = utils.encode_uid(user.pk)
         context["token"] = default_token_generator.make_token(user)
         context["url"] = settings.ACTIVATION_URL.format(**context)
-        context["domain"] = "localhost:5173" # Your site domain
-        context["protocol"] = "http" # Your site protocol e.g. ("http", "https")
+        context["domain"] = "abdelrahman-farah.github.io/elms-front/#" # Your site domain
+        context["protocol"] = "https" # Your site protocol e.g. ("http", "https")
         return context
 
 
@@ -26,6 +26,6 @@ class PasswordResetEmail(BaseEmailMessage):
         context["uid"] = utils.encode_uid(user.pk)
         context["token"] = default_token_generator.make_token(user)
         context["url"] = settings.PASSWORD_RESET_CONFIRM_URL.format(**context)
-        context["domain"] = "localhost:5173" # Your site domain
-        context["protocol"] = "http" # Your site protocol e.g. ("http", "https")
+        context["domain"] = "abdelrahman-farah.github.io/elms-front/#" # Your site domain
+        context["protocol"] = "https" # Your site protocol e.g. ("http", "https")
         return context
