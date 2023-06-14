@@ -1,0 +1,27 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+django = "*"
+pillow = "*"
+djangorestframework-simplejwt = "*"
+djoser = "*"
+djangorestframework = "*"
+drf-nested-routers = "*"
+django-debug-toolbar = "*"
+django-cors-headers = "*"
+google-api-core = "*"
+google-api-python-client = "*"
+gunicorn = "*"
+dj-database-url = "*"
+django-environ = "*"
+psycopg2 = "*"
+boto3 = "*"
+django-storages = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.11"

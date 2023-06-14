@@ -13,7 +13,7 @@ class User(AbstractUser):
     first_name = models.CharField(max_length=64)
     last_name = models.CharField(max_length=64)
     email = models.EmailField(unique=True)
-    creds = models.ForeignKey(
-        Creds, on_delete=models.CASCADE, default=1, blank=True)
+    # creds = models.ForeignKey(
+    #     Creds, on_delete=models.CASCADE, default=1, blank=True, null=True)
     profile_picture = models.ImageField(
         upload_to="profile-picture", default='default.jpg')
