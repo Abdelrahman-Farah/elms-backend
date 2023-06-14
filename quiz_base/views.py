@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.conf import settings
 from django.core.mail import send_mail
 
@@ -12,8 +13,8 @@ from .models import QuizModel
 from .serializers import SimpleQuizModelSerializer, QuizModelSerializer
 from .permissions import OwnerOrEnrolledRead
 
-
-
+from events.views import createOut
+from events.serializers import CourseEventSerializer
 class QuizModelViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated, OwnerOrEnrolledRead]
     serializer_class = SimpleQuizModelSerializer
@@ -40,6 +41,23 @@ class QuizModelViewSet(ModelViewSet):
 
         classroom_id = self.kwargs['course_pk']
         classroom = Course.objects.get(pk=classroom_id)
+
+
+        ########################## create event ##########################
+        start_date = quiz.start_date
+        end_date = start_date + timedelta(minutes=quiz.duration_in_minutes)
+
+        event = {
+            'summary': quiz.title,
+            'description': quiz.description,
+            'start_time': quiz.start_date,
+            'end_time': end_date,
+        }
+        course_event_serializer = CourseEventSerializer(data=event)
+
+        createOut(user= self.request.user,course_pk=classroom_id, event_serializer=course_event_serializer)
+        ##############################################################################
+
 
         emails = []
         queryset = CourseLearner.objects.select_related('learner__user').filter(course=classroom)

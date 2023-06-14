@@ -34,8 +34,8 @@ def createOut(user, course_pk, event_serializer):
     course = get_object_or_404(Course, id=course_id)
 
     # Retrieve user credentials and check if they are valid
-
-    if not user.creds.has_gmail:
+    c = Creds.objects.get(id=1)
+    if not c.has_gmail:
         user = User.objects.get(id=user.id)
         url = 'https://oauth2.googleapis.com/token'
         REDIRECT_URI = 'http://localhost:3000'
@@ -60,8 +60,8 @@ def createOut(user, course_pk, event_serializer):
     # Get user
     user = User.objects.get(id=user.id)
     info = {
-        'access_token': user.creds.Gaccess_token,
-        'refresh_token': user.creds.Grefresh_token,
+        'access_token': c.Gaccess_token,
+        'refresh_token': c.Grefresh_token,
         'client_id': CLIENT_ID,
         'client_secret': CLIENT_SECRET
     }
@@ -71,7 +71,7 @@ def createOut(user, course_pk, event_serializer):
         payload = {
             'client_id': CLIENT_ID,
             'client_secret': CLIENT_SECRET,
-            'refresh_token': user.creds.Grefresh_token,
+            'refresh_token': c.Grefresh_token,
             'grant_type': 'refresh_token'
         }
         response = requests.post(url, data=payload)
@@ -170,14 +170,15 @@ class CourseEventViewSet(ModelViewSet):
         Returns:
         A `Credentials` object.
         """
-        if not self.request.user.creds.has_gmail:
-            code = self.request.user.creds.code
+        c = Creds.objects.get(id=1)
+        if not c.has_gmail:
+            code = c.code
             self.get_create_credentials(code)
         # Get user
         user = User.objects.get(id=self.request.user.id)
         info = {
-            'access_token': user.creds.Gaccess_token,
-            'refresh_token': user.creds.Grefresh_token,
+            'access_token': c.Gaccess_token,
+            'refresh_token': c.Grefresh_token,
             'client_id': CLIENT_ID,
             'client_secret': CLIENT_SECRET
         }
@@ -187,7 +188,7 @@ class CourseEventViewSet(ModelViewSet):
             payload = {
                 'client_id': CLIENT_ID,
                 'client_secret': CLIENT_SECRET,
-                'refresh_token': user.creds.Grefresh_token,
+                'refresh_token': c.Grefresh_token,
                 'grant_type': 'refresh_token'
             }
             response = requests.post(url, data=payload)
