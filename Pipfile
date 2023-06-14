@@ -20,6 +20,8 @@ django-environ = "*"
 psycopg2 = "*"
 boto3 = "*"
 django-storages = "*"
+channels = "*"
+daphne = "*"
 
 [dev-packages]
 
