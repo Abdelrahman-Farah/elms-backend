@@ -39,6 +39,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -55,7 +56,13 @@ INSTALLED_APPS = [
     'events',
     'quiz_base',
     'quiz',
+    'chat'
 ]
+
+CHANNEL_LAYERS = {"default": {
+    "BACKEND": "channels.layers.InMemoryChannelLayer"
+}}
+
 
 MIDDLEWARE = [
     'debug_toolbar.middleware.DebugToolbarMiddleware',
@@ -82,7 +89,6 @@ CORS_ALLOW_ALL_ORIGINS = True
 ALLOWED_HOSTS = ['*']
 
 
-
 ROOT_URLCONF = 'elms.urls'
 
 TEMPLATES = [
@@ -102,7 +108,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'elms.wsgi.application'
-
+ASGI_APPLICATION = 'elms.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases

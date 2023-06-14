@@ -10,3 +10,6 @@ class CourseEvent(models.Model):
     end_time = models.DateTimeField()
     course = models.ForeignKey(
         Course, on_delete=models.CASCADE, related_name="course_events")
+
+    def __str__(self):
+        return self.summary
