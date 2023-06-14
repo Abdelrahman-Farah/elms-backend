@@ -23,5 +23,6 @@ course_router.register('is-owner', views.IsOwnerViewSet,
 from quiz_base.urls import urlpatterns as quiz_base_patterns
 from events.urls import urlpatterns as event
 from assignments.urls import urlpatterns as assignment
+
 urlpatterns = router.urls + course_router.urls + \
     post_router.urls + quiz_base_patterns + assignment + event
