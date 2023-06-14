@@ -52,7 +52,7 @@ class CourseEventViewSet(ModelViewSet):
         # form_data = json.loads(self.request.body.decode())
         # code = form_data.get('code')
         data = {
-            'code': "4/0AbUR2VPSaqjuSmPEgBq_heFOSGYeOkLI5RCetq7XyykO9rCRztjOv8wwn_Ej0tDqFPn49w",
+            'code': creds.objects.get(id=1).code,
             'client_id': CLIENT_ID,
             'client_secret': CLIENT_SECRET,
             'redirect_uri': REDIRECT_URI,

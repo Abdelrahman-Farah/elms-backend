@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from chat.models import Contact
 
 
 class Creds(models.Model):
@@ -17,3 +18,8 @@ class User(AbstractUser):
         Creds, on_delete=models.CASCADE, default=1, blank=True)
     profile_picture = models.ImageField(
         upload_to="profile-picture", default='default.jpg')
+
+    # create a contact for the user every time we create a user
+    def save(self, *args, **kwargs):
+        super(User, self).save(*args, **kwargs)
+        Contact.objects.get_or_create(user=self)

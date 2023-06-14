@@ -29,7 +29,11 @@ urlpatterns = [
     path('core/', include('core.urls')),
     path('dashboard/', include('dashboard.urls')),
 
+    path("chat/", include("chat.api.urls", namespace='chat-api')),
+
+
     path('api-auth/', include('rest_framework.urls')),
 ]
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.MEDIA_URL,
+                          document_root=settings.MEDIA_ROOT)
