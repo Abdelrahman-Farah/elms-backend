@@ -4,10 +4,30 @@ from core.models import User
 
 
 class ChatSerializer(serializers.ModelSerializer):
-
+    participants = serializers.SerializerMethodField()
     class Meta:
         model = Chat
         fields = ['id', 'participants', 'messages']
+        
+    def get_participants(self, obj):
+        return [
+            {
+                "id": p.user.id,
+                "username": p.user.username,
+                "email": p.user.email,
+                "first_name": p.user.first_name,
+                "last_name": p.user.last_name,
+                "profile_pic": p.user.profile_picture.url,
+            }
+            for p in obj.participants.all()
+        ]
+
+class ChatSerializerForCreate(serializers.ModelSerializer):
+    id=serializers.IntegerField(read_only=True)
+    class Meta:
+        model = Chat
+        fields = ['id', 'participants']
+        
 
 
 class ContactSerializer(serializers.ModelSerializer):

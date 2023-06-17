@@ -10,8 +10,25 @@ import time
 
 class ChatConsumer(WebsocketConsumer):
     def fetch_messages(self, data):
+        
         Messages = Chat.objects.get(
             id=int(self.room_name)).messages.order_by('timestamp').all()
+        
+        participants = Chat.objects.get(
+            id=int(self.room_name)).participants.all()
+        # if the current user is not in the chat return empty list
+        flag=False
+        for participant in participants:
+            if participant.user.username == data["from"]:
+                flag=True
+                break
+        
+        if not flag:
+            return self.send_chat_message({
+                "command": "fetch_messages",
+                "messages": [],
+            })
+            
         content = {
             "command": "new_message",
             "messages": self.messages_to_json(Messages),
@@ -19,22 +36,13 @@ class ChatConsumer(WebsocketConsumer):
         self.send_chat_message(content)
 
     def new_message(self, data):
-        print(data)
         author_user = data["from"]
         user = User.objects.get(username=author_user)
         author_chat = Chat.objects.get(id=int(self.room_name))
-
-        participant_ids = author_chat.participants.values_list("id", flat=True)
-        participant_ids = list(participant_ids)
-        print(participant_ids)
-        author_contact = Contact.objects.filter(
-            user=user, friends__user__id__in=participant_ids
-        ).select_related("user").select_related("friends").first()
-        print(author_contact)
+        author_contact = Contact.objects.get(user=user)
         message = Message.objects.create(
             contact=author_contact,
             content=data["message"])
-
         author_chat.messages.add(message)
 
         content = {
@@ -47,9 +55,10 @@ class ChatConsumer(WebsocketConsumer):
         result = []
         for message in messages:
             result.append(self.message_to_json(message))
+        # print(result)
         return result
 
-    def message_to_json(self, message):
+    def message_to_json(self,message):
         return {
             "author": message.contact.user.username,
             "content": message.content,
@@ -64,7 +73,6 @@ class ChatConsumer(WebsocketConsumer):
     def connect(self):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         self.room_group_name = "chat_%s" % self.room_name
-
         # Join room group
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name, self.channel_name
@@ -80,11 +88,13 @@ class ChatConsumer(WebsocketConsumer):
 
     # Receive message from WebSocket
     def receive(self, text_data):
+        # print(text_data)
         data = json.loads(text_data)
         self.commands[data["command"]](self, data)
 
     def send_chat_message(self, message):
         # Send message to room group
+        print(message)
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name, {"type": "chat_message", "message": message}
         )
